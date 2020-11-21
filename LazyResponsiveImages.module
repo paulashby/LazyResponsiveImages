@@ -34,7 +34,7 @@ class LazyResponsiveImages extends WireData implements Module {
  */
   public function customSaveConfig($event) {
 
-  	$class = $event->arguments(0);
+    $class = $event->arguments(0);
     $page_path = $this->page->path();
     if($class !== $this->className || $page_path !== "/processwire/module/") return;
     
@@ -118,14 +118,14 @@ class LazyResponsiveImages extends WireData implements Module {
     public function renderImage($options) {
 
     	$image = $options["image"];
-		$context = $options["context"];
-		$hdpi = explode(",", $options["desktop_hdpi"]);
-		$sizes = $options["sizes"];
-		$alt_str = $options["alt_str"];
-		$class = $options["class"];
-		$variations = $this["image_spec"][$options["field_name"]];
-    	$fallbacks = $this["image_fallback_spec"];
-    	$product_data_attributes = $options["product_data_attributes"];
+      $context = $options["context"];
+      $hdpi = explode(",", $options["desktop_hdpi"]);
+      $sizes = $options["sizes"];
+      $alt_str = $options["alt_str"];
+      $class = $options["class"];
+      $variations = $this["image_spec"][$options["field_name"]];
+      $fallbacks = $this["image_fallback_spec"];
+      $product_data_attributes = $options["product_data_attributes"];
 
     	// Set fallback src image
     	if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
