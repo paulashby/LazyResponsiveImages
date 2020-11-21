@@ -117,7 +117,7 @@ class LazyResponsiveImages extends WireData implements Module {
 
     public function renderImage($options) {
 
-    	$image = $options["image"];
+      $image = $options["image"];
       $context = $options["context"];
       $hdpi = explode(",", $options["desktop_hdpi"]);
       $sizes = $options["sizes"];
