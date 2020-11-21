@@ -1,0 +1,148 @@
+<?php namespace ProcessWire;
+
+class LazyResponsiveImages extends WireData implements Module {
+
+	public static function getModuleInfo() {
+
+		return [
+			'title' => 'Lazy Responsive Images', 
+			'summary' => 'Creates image variations and renders markup for HTML5 image srcsets.',
+			'author' => 'Paul Ashby, primitive.co', 
+			'version' => 1,
+			// singular=true: indicates that only one instance of the module is allowed.
+			// This is usually what you want for modules that attach hooks. 
+			'singular' => true, 
+			// autoload=true: indicates the module should be started with ProcessWire.
+			// This is necessary for any modules that attach runtime hooks, otherwise those
+			// hooks won't get attached unless some other code calls the module on it's own.
+			// Note that autoload modules are almost always also 'singular' (seen above).
+			'autoload' => true
+			];
+	}
+
+  public function ready() {
+		$this->addHookBefore("Modules::saveConfig", $this, "customSaveConfig");
+	}
+	public function init() {
+
+		$this->addHookAfter('InputfieldFile::fileAdded', $this, 'sizeImage');
+	}
+	/**
+ * Store info for created elements and pass to completeInstall function
+ *
+ * @param  HookEvent $event
+ */
+  public function customSaveConfig($event) {
+
+  	$class = $event->arguments(0);
+    $page_path = $this->page->path();
+    if($class !== $this->className || $page_path !== "/processwire/module/") return;
+    
+    // Config input
+    $data = $event->arguments(1);
+    $modules = $event->object;
+    $configured = array_key_exists("configured", $data);
+
+    if( ! $configured) {
+     
+      // Installing - fine to update config
+      $data["configured"] = true; // Set flag
+
+      // Get details of fields with responsive image sizes
+      $sanitized_image_fields = $this->sanitizer->text($data["image_fields"]);
+
+      //Convert to associative array of field_name properties with comma-space delimited size string values
+      parse_str($sanitized_image_fields, $image_field_spec);
+
+      // Convert size strings to arrays
+      foreach ($image_field_spec as $field_name => &$sizes) {
+
+      	$sizes = explode(",", $sizes);
+      }
+      unset($field_name);
+      unset($sizes);
+
+      // Save $image_spec array
+      $data["image_spec"] = $image_field_spec;
+
+      // Save $image_spec array
+      $fallbacksStr = $this->sanitizer->text($data["fallbacks_by_context"]);
+      if(strlen($fallbacksStr)) {
+	      $data["image_fallback_spec"] = $this->configStringToArray($fallbacksStr);
+      }
+
+      $data["eager_load_spec"] = $this->configStringToArray($this->sanitizer->text($data["eager_loads_by_context"]));
+      $event->arguments(1, $data);
+  	}
+  }
+	/*
+		Convert configuration entry to array
+	*/  
+	public function configStringToArray($str) {
+
+		parse_str($str, $arr);
+		return $arr;
+	}
+
+  public function sizeImage($event) {
+
+    	$inputfield = $event->object;
+    	$image_spec = $this->image_spec;
+    	$variations = false;
+
+    	// Check whether this inputField requires responsive image variations
+    	foreach ($image_spec as $field_name => $sizes) {
+    		
+    		if($inputfield->name == $field_name) {
+    			$variations = $sizes;
+    		}
+    	}
+
+    	// All done if no variations required
+    	if($variations == false) return;
+
+    	// Make variations
+    	$image = $event->argumentsByName("pagefile");
+
+    	foreach ($variations as $width) {
+
+        	$image->size( $width, 0);
+        }
+    }
+
+    public function getMaxEager($context) {
+
+    	return $this["eager_load_spec"][$context];
+    }
+
+    public function renderImage($options) {
+
+    	$image = $options["image"];
+		$context = $options["context"];
+		$hdpi = explode(",", $options["desktop_hdpi"]);
+		$sizes = $options["sizes"];
+		$alt_str = $options["alt_str"];
+		$class = $options["class"];
+		$variations = $this["image_spec"][$options["field_name"]];
+    	$fallbacks = $this["image_fallback_spec"];
+    	$product_data_attributes = $options["product_data_attributes"];
+
+    	// Set fallback src image
+    	if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
+    		$src_url = $image->size($fallbacks[$context], 0)->url;
+    	} else {
+    		$src_url = $image->size(end($variations), 0)->url;
+    	}
+
+    	$srcset = "";
+    	foreach ($variations as $size) {
+    		$suffix = in_array($size, $hdpi) ? "2x" : "w";
+    		$srcset .= $image->size($size, 0)->url . " " . $size . $suffix . ",";
+    	}
+
+    	if($options["lazy_load"]) {
+    		return "<img alt='$alt_str' class='$class lazy' data-src='$src_url' data-srcset='$srcset' data-sizes='$sizes' $product_data_attributes>";
+    	}
+    	return "<img alt='$alt_str' class='$class' src='$src_url' srcset='$srcset' sizes='$sizes' $product_data_attributes>";
+    }
+}
