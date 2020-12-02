@@ -119,7 +119,6 @@ class LazyResponsiveImages extends WireData implements Module {
 
       $image = $options["image"];
       $context = $options["context"];
-      $hdpi = explode(",", $options["desktop_hdpi"]);
       $sizes = $options["sizes"];
       $alt_str = $options["alt_str"];
       $class = $options["class"];
@@ -135,10 +134,13 @@ class LazyResponsiveImages extends WireData implements Module {
     	}
 
     	$srcset = "";
+      
     	foreach ($variations as $size) {
-    		$suffix = in_array($size, $hdpi) ? "2x" : "w";
-    		$srcset .= $image->size($size, 0)->url . " " . $size . $suffix . ",";
+        $srcset .= $image->size($size, 0)->url . " {$size}w,";
     	}
+
+      // Remove trailing comma
+      $srcset = substr($srcset, 0, -1);
 
     	if($options["lazy_load"]) {
     		return "<img alt='$alt_str' class='$class lazy' data-src='$src_url' data-srcset='$srcset' data-sizes='$sizes' $product_data_attributes>";
