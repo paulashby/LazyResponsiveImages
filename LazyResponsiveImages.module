@@ -117,14 +117,14 @@ class LazyResponsiveImages extends WireData implements Module {
 
     public function renderImage($options) {
 
-      $image = $options["image"];
-      $context = $options["context"];
-      $sizes = $options["sizes"];
       $alt_str = $options["alt_str"];
       $class = $options["class"];
+      $context = $options["context"];
       $variations = $this["image_spec"][$options["field_name"]];
-      $fallbacks = $this["image_fallback_spec"];
+      $image = $options["image"];
       $product_data_attributes = $options["product_data_attributes"];
+      $sizes = $options["sizes"];
+      $fallbacks = $this["image_fallback_spec"];
 
     	// Set fallback src image
     	if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
