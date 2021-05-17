@@ -114,7 +114,7 @@ class LazyResponsiveImages extends WireData implements Module {
 
     	return $this["eager_load_spec"][$context];
     }
-
+    
     public function renderImage($options) {
 
       $alt_str = $options["alt_str"];
@@ -126,25 +126,38 @@ class LazyResponsiveImages extends WireData implements Module {
       $sizes = $options["sizes"];
       $fallbacks = $this["image_fallback_spec"];
 
-    	// Set fallback src image
-    	if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
-    		$src_url = $image->size($fallbacks[$context], 0)->url;
-    	} else {
-    		$src_url = $image->size(end($variations), 0)->url;
-    	}
+      // Set fallback src image
+      if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
+        $src_url = $image->size($fallbacks[$context], 0)->url;
+      } else {
+        $src_url = $image->size(end($variations), 0)->url;
+      }
 
-    	$srcset = "";
+      $srcset = "";
+      $webp_srcset = "";
       
-    	foreach ($variations as $size) {
-        $srcset .= $image->size($size, 0)->url . " {$size}w,";
-    	}
+      foreach ($variations as $size) {
+        $var_img = $image->size($size, 0);
+        $webp_srcset .= $var_img->webp->url . " {$size}w,";;
+        $srcset .= $var_img->url . " {$size}w,";
+      }
 
       // Remove trailing comma
       $srcset = substr($srcset, 0, -1);
+      $webp_srcset = substr($webp_srcset, 0, -1);
+      $data_prfx = "";
 
-    	if($options["lazy_load"]) {
-    		return "<img alt='$alt_str' class='$class lazy' data-src='$src_url' data-srcset='$srcset' data-sizes='$sizes' $product_data_attributes>";
-    	}
-    	return "<img alt='$alt_str' class='$class' src='$src_url' srcset='$srcset' sizes='$sizes' $product_data_attributes>";
+      if($options["lazy_load"]) {
+        $data_prfx = "data-";
+        $class .= " lazy";
+      }
+
+      if(array_key_exists("webp", $options) && $options["webp"]) {
+        return "<picture>
+        <source type='image/webp' {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'/>
+        <img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes/>
+        </picture>";
+      }
+      return "<img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes>";
     }
 }
