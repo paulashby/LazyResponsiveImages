@@ -41,39 +41,33 @@ class LazyResponsiveImages extends WireData implements Module {
     // Config input
     $data = $event->arguments(1);
     $modules = $event->object;
-    $configured = array_key_exists("configured", $data);
 
-    if( ! $configured) {
-     
-      // Installing - fine to update config
-      $data["configured"] = true; // Set flag
+    // Get details of fields with responsive image sizes
+    $sanitized_image_fields = $this->sanitizer->text($data["image_fields"]);
 
-      // Get details of fields with responsive image sizes
-      $sanitized_image_fields = $this->sanitizer->text($data["image_fields"]);
+    //Convert to associative array of field_name properties with comma-space delimited size string values
+    parse_str($sanitized_image_fields, $image_field_spec);
 
-      //Convert to associative array of field_name properties with comma-space delimited size string values
-      parse_str($sanitized_image_fields, $image_field_spec);
+    // Convert size strings to arrays
+    foreach ($image_field_spec as $field_name => &$sizes) {
 
-      // Convert size strings to arrays
-      foreach ($image_field_spec as $field_name => &$sizes) {
+    	$sizes = explode(",", $sizes);
+    }
+    unset($field_name);
+    unset($sizes);
 
-      	$sizes = explode(",", $sizes);
-      }
-      unset($field_name);
-      unset($sizes);
+    // Save $image_spec array
+    $data["image_spec"] = $image_field_spec;
 
-      // Save $image_spec array
-      $data["image_spec"] = $image_field_spec;
+    // Save $image_spec array
+    $fallbacksStr = $this->sanitizer->text($data["fallbacks_by_context"]);
+    if(strlen($fallbacksStr)) {
+      $data["image_fallback_spec"] = $this->configStringToArray($fallbacksStr);
+    }
 
-      // Save $image_spec array
-      $fallbacksStr = $this->sanitizer->text($data["fallbacks_by_context"]);
-      if(strlen($fallbacksStr)) {
-	      $data["image_fallback_spec"] = $this->configStringToArray($fallbacksStr);
-      }
+    $data["eager_load_spec"] = $this->configStringToArray($this->sanitizer->text($data["eager_loads_by_context"]));
+    $event->arguments(1, $data);
 
-      $data["eager_load_spec"] = $this->configStringToArray($this->sanitizer->text($data["eager_loads_by_context"]));
-      $event->arguments(1, $data);
-  	}
   }
 	/*
 		Convert configuration entry to array
@@ -105,7 +99,7 @@ class LazyResponsiveImages extends WireData implements Module {
     	$image = $event->argumentsByName("pagefile");
 
     	foreach ($variations as $width) {
-
+        
         	$image->size( $width, 0);
         }
     }
