@@ -119,7 +119,12 @@ class LazyResponsiveImages extends WireData implements Module {
       $product_data_attributes = $options["product_data_attributes"];
       $sizes = $options["sizes"];
       $fallbacks = $this["image_fallback_spec"];
+      $extra_attributes = "";
 
+      if(array_key_exists("extra_attributes", $options)) {
+        $extra_attributes = $options["extra_attributes"];
+      }
+      
       // Set fallback src image
       if($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])){
         $src_url = $image->size($fallbacks[$context], 0)->url;
@@ -149,7 +154,7 @@ class LazyResponsiveImages extends WireData implements Module {
       if(array_key_exists("webp", $options) && $options["webp"]) {
         return "<picture>
         <source type='image/webp' {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'/>
-        <img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes/>
+        <img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes $extra_attributes/>
         </picture>";
       }
       return "<img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes>";
