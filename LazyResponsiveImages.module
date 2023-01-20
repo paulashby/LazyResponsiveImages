@@ -9,14 +9,8 @@ class LazyResponsiveImages extends WireData implements Module {
 			'summary' => 'Creates image variations and renders markup for HTML5 image srcsets.',
 			'author' => 'Paul Ashby, primitive.co', 
 			'version' => 1,
-			// singular=true: indicates that only one instance of the module is allowed.
-			// This is usually what you want for modules that attach hooks. 
-			'singular' => true, 
-			// autoload=true: indicates the module should be started with ProcessWire.
-			// This is necessary for any modules that attach runtime hooks, otherwise those
-			// hooks won't get attached unless some other code calls the module on it's own.
-			// Note that autoload modules are almost always also 'singular' (seen above).
-			'autoload' => true
+			'singular' => true,
+      'autoload' => true
 			];
 	}
 
@@ -58,8 +52,7 @@ class LazyResponsiveImages extends WireData implements Module {
 
     // Save $image_spec array
     $data["image_spec"] = $image_field_spec;
-
-    // Save $image_spec array
+    
     $fallbacksStr = $this->sanitizer->text($data["fallbacks_by_context"]);
     if(strlen($fallbacksStr)) {
       $data["image_fallback_spec"] = $this->configStringToArray($fallbacksStr);
