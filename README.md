@@ -18,7 +18,7 @@
   - **Image widths** - enter image field name with comma-separated list of the sizes required for use in related srcsets. Use ampersand to separate field entries:<br />eg "product_shot=100,200,300&hero=1920,1500,960"<br /> The module will generate the correct variations each time an image is uploaded to an included field.
   - **Number of eager load images to use in each context** - ampersand separated key value pairs:<br />eg "home=4&subcat=6"
   - **Width of image to use as src for older browsers** - ampersand separated key value pairs:<br />eg "home=1200&subcat=800"<br />
-  These sizes wil be used for legacy browsers that don't support srcset
+  These sizes will be used for legacy browsers that don't support srcset
   
   ## Usage
   Load the module in your php file<br />```$lazyImages = $modules->get("LazyResponsiveImages");```<br /><br />Retrieve the max_eager value for the current context if you have provided this in the module settings (see [Installation](#installation)). Use this to set an appropriate boolean value for the the lazy_load option.<br /><br />Configure the options array for your image:<br />
@@ -42,7 +42,7 @@
     
   ## Contributing
   
-  If you would like to make a contribution to the app, simply fork the respository and submit a Pull Request. If I like it, I may include it in the codebase.
+  If you would like to make a contribution to the app, simply fork the repository and submit a Pull Request. If I like it, I may include it in the codebase.
   
   ## Tests
   
