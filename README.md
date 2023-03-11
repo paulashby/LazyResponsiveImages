@@ -54,4 +54,4 @@
   
   ## Questions
   
-  Feel free to [email me](mailto:paul@primitive.co?subject=LazyResponsiveImages%20query%20from%20GitHub) with any queries. If you'd like to see some of my other projects, my GitHub user name is [paulashby](https://github.com/paulashby).
+  Feel free to [email me](mailto:paul@primitive.co?subject=LazyResponsiveImages%20query%20from%20GitHub) with any queries.
