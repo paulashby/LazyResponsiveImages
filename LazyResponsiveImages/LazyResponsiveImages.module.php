@@ -8,7 +8,7 @@ class LazyResponsiveImages extends WireData implements Module {
 			'title' => 'Lazy Responsive Images', 
 			'summary' => 'Creates image variations and renders markup for HTML5 image srcsets.',
 			'author' => 'Paul Ashby, primitive.co', 
-			'version' => 1,
+			'version' => 1.1,
 			'singular' => true,
       'autoload' => true
 			];
@@ -105,13 +105,15 @@ class LazyResponsiveImages extends WireData implements Module {
     public function renderImage($options) {
 
       $alt_str = $options["alt_str"];
-      $class = $options["class"];
-      $context = $options["context"];
+      $img_class = $base_class = $options["class"] ?? "";
+      $context = $options["context"] ?? "";
       $variations = $this["image_spec"][$options["field_name"]];
       $image = $options["image"];
-      $product_data_attributes = $options["product_data_attributes"];
+      $aspect_ratio = $image->ratio();
+      $product_data_attributes = $options["product_data_attributes"] ?? "";
       $sizes = $options["sizes"];
-      $fallbacks = $this["image_fallback_spec"];
+      $lazy_load = $options["lazy_load"] ?? false;
+      $fallbacks = $this["image_fallback_spec"] ?? false;
       $extra_attributes = "";
 
       if(array_key_exists("extra_attributes", $options)) {
@@ -130,7 +132,7 @@ class LazyResponsiveImages extends WireData implements Module {
       
       foreach ($variations as $size) {
         $var_img = $image->size($size, 0);
-        $webp_srcset .= $var_img->webp->url . " {$size}w,";;
+        $webp_srcset .= $var_img->webp->url . " {$size}w,";
         $srcset .= $var_img->url . " {$size}w,";
       }
 
@@ -139,17 +141,26 @@ class LazyResponsiveImages extends WireData implements Module {
       $webp_srcset = substr($webp_srcset, 0, -1);
       $data_prfx = "";
 
-      if($options["lazy_load"]) {
+      if($lazy_load) {
         $data_prfx = "data-";
-        $class .= " lazy";
+        $img_class .= " lazy noscript-hidden";
       }
 
       if(array_key_exists("webp", $options) && $options["webp"]) {
-        return "<picture>
-        <source type='image/webp' {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'/>
-        <img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes $extra_attributes/>
-        </picture>";
+        return "<picture class='noscript-hidden'>
+            <source type='image/webp' {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'/>
+            <img alt='$alt_str' class='$img_class' style='aspect-ratio: $aspect_ratio' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes $extra_attributes/>
+        </picture>
+        <noscript>
+            <picture>
+            <source type='image/webp' srcset='$webp_srcset'/>
+            <img alt='$alt_str' class='$base_class' style='aspect-ratio: $aspect_ratio' sizes='$sizes' src='$src_url' $product_data_attributes $extra_attributes/>
+            </picture>
+        </noscript>";
       }
-      return "<img alt='$alt_str' class='$class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes>";
+      return "<img alt='$alt_str' class='$img_class' {$data_prfx}src='$src_url' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' $product_data_attributes>
+      <noscript>
+        <img alt='$alt_str' class='$base_class' src='$src_url' srcset='$srcset' sizes='$sizes' $product_data_attributes>
+      </noscript>";
     }
 }
