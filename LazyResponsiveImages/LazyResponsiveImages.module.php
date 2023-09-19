@@ -106,7 +106,6 @@ class LazyResponsiveImages extends WireData implements Module {
     }
 
     public function renderImage($options) {
-        bd($options);
         $image = $options["image"];
         $options["alt_str"] = str_replace("'", "", $options["alt_str"]); // Remove apostrophes
         $options["aspect_ratio"] = $image->ratio();
