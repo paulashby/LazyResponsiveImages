@@ -107,36 +107,18 @@ class LazyResponsiveImages extends WireData implements Module {
 
     public function renderImage($options) {
         $image = $options["image"];
-        $options["alt_str"] = str_replace("'", "", $options["alt_str"]); // Remove apostrophes
-        $options["aspect_ratio"] = $image->ratio();
+        $url_options = [
+            "image" => $image,
+            "context" => $options["context"] ?? ""
+        ];
+        $webp = $options["webp"] ?? false;
+        $alt_str = str_replace("'", "", $options["alt_str"]); // Remove apostrophes
         $options["img_class"] = $options["class"] ?? "";
-        $product_data_attributes = $options["product_data_attributes"] ?? "";
-        $extra_attributes = $options["extra_attributes"] ?? "";
-        $options["custom_attributes"] = "$product_data_attributes $extra_attributes";
-        $variations = $this["image_spec"][$options["field_name"]];
-
-        // Set fallback src image
-        $context = $options["context"] ?? "";
-        $fallbacks = $this["image_fallback_spec"] ?? false;
-        if ($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])) {
-            $options["src_url"] = $image->size($fallbacks[$context], 0)->url;
-        } else {
-            $options["src_url"] = $image->size(end($variations), 0)->url;
-        }
-
-        $srcset = "";
-        $webp_srcset = "";
-
-        foreach ($variations as $size) {
-            $var_img = $image->size($size, 0);
-            $webp_srcset .= $var_img->webp->url . " {$size}w,";
-            $srcset .= $var_img->url . " {$size}w,";
-        }
-
-        $options["srcset"] = substr($srcset, 0, -1); // Remove trailing comma
-        $options["webp_srcset"] = substr($webp_srcset, 0, -1);
-
+        $variations = [];
+        $art_directed = is_array($options["image"]);
+        $has_source = $webp || $art_directed;
         $lazy_load = $options["lazy_load"] ?? false;
+
         if ($lazy_load) {
             $options["data_prfx"] = "data-";
             $options["img_class"] .= " lazy noscript-hidden";
@@ -144,41 +126,105 @@ class LazyResponsiveImages extends WireData implements Module {
             $options["data_prfx"] = "";
         }
 
-        $options["img_markup"] = $this->getImageMarkup($options);
+        if ($has_source) {
+            // art directed or webp
+            $source_markup = "";
 
-        $webp = array_key_exists("webp", $options) && $options["webp"];
+            if ($art_directed) {
+                // Iterate art directed images and get source elements
+                foreach ($options["image"] as $field_name => $variant) {
+                    
+                    $variations = $this["image_spec"][$field_name];
+                    bd($variant["image"]);
+                    
+                    $source_options = [
+                        "image" => $variant["image"],
+                        "media" => $variant["media"],
+                        "sizes" => $variant["sizes"],
+                        "data_prfx" => $options["data_prfx"],
+                        "variations" => $variations
+                    ];
+                    
+                    $source_markup .= $this->getSourceElmts($source_options, $webp, $art_directed);
+                }
+            } else {
+                // get source for the single image with webp version
+                $variations = $this["image_spec"][$options["field_name"]];
+                $options["variations"] = $variations;
 
-        if ($webp) {
-            return $this->renderPictureElement($options);
+                $source_options = [
+                    "image" => $image,
+                    "media" => false,
+                    "sizes" => $options["sizes"],
+                    "data_prfx" => $options["data_prfx"],
+                    "variations" => $variations
+                ];
+                
+                $source_markup = $this->getSourceElmts($options, $webp, $art_directed);
+            }
+            
+            
+            $url_options["variations"] = $variations;
+            $src_url = $this->getSrcUrl($url_options, $art_directed);
+
+            return "<picture>
+                $source_markup
+                <img alt='$alt_str' class='{$options["img_class"]}' src='$src_url'>
+            </picture>"; 
         }
-        return $this->renderImageElement($options);
+
+        // Not art directed or webp - get standalone image markup
+        $variations = $this["image_spec"][$options["field_name"]];
+        $srcset = $this->getSrcset($options["image"], $variations, $webp);
+        $sizes = $options["sizes"];
+        $url_options["variations"] = $variations;
+        $src_url = $this->getSrcUrl($url_options, $art_directed);
+        return "<img alt='$alt_str' class='{$options["img_class"]}' srcset='$srcset' sizes='$sizes' src='$src_url'>";
+
+        // Still need noscript
     }
 
-    private function renderPictureElement($options) {
+    private function getSrcUrl($url_options, $art_directed = false) {
+        
+        $image = $art_directed ? end($url_options["image"])["image"] : $url_options["image"];
+        $context = $url_options["context"];
 
-        return "<picture class='noscript-hidden'>
-                <source type='image/webp' {$options["data_prfx"]}srcset='{$options["webp_srcset"]}' {$options["data_prfx"]} sizes='{$options["sizes"]}'/>
-                {$options["img_markup"]["scripton"]}
-            </picture>
-            <noscript>
-                <picture>
-                <source type='image/webp' srcset='{$options["webp_srcset"]}'/>
-                {$options["img_markup"]["noscript"]}
-                </picture>
-            </noscript>";
-
+        $fallbacks = $this["image_fallback_spec"] ?? false;
+        if ($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])) {
+            return $image->size($fallbacks[$context], 0)->url;
+        }
+        return $image->size(end($url_options["variations"]), 0)->url;
     }
-    private function renderImageElement($options) {
 
-        return "{$options["img_markup"]["scripton"]}
-            <noscript>
-                {$options["img_markup"]["noscript"]}
-            </noscript>";
+    private function getSourceElmts($source_options, $webp, $art_directed = false) {
+        $media_str = !$art_directed ? "" : "media='{$source_options["media"]}'";
+        $sizes = $source_options["sizes"];
+        $source_elmts = "";
+
+        // Source for webp
+        if ($webp) {
+            $webp_srcset = $this->getSrcset($source_options, $webp);
+            $source_elmts .= "<source type='image/webp' $media_str srcset='$webp_srcset' sizes='$sizes'>";
+        }
+
+        // Source for regular image type
+        $srcset = $this->getSrcset($source_options, $webp);
+        $source_elmts .= "<source $media_str srcset='$srcset' sizes='$sizes'>";
+
+        return $source_elmts;    
     }
-    private function getImageMarkup($options) {
-        return [
-            "scripton" => "<img alt='{$options["alt_str"]}' class='{$options["img_class"]}' style='aspect-ratio: {$options["aspect_ratio"]}' {$options["data_prfx"]}src='{$options["src_url"]}' {$options["data_prfx"]}srcset='{$options["srcset"]}' {$options["data_prfx"]}sizes='{$options["sizes"]}' {$options["custom_attributes"]}/>",
-            "noscript" => "<img alt='{$options["alt_str"]}' class='{$options["class"]}' style='aspect-ratio: {$options["aspect_ratio"]}' sizes='{$options["sizes"]}' src='{$options["src_url"]}' {$options["custom_attributes"]}/>"
-        ];
+
+    public function getSrcset($srcset_options, $webp) {
+        $srcset = "";
+
+        foreach ($srcset_options["variations"] as $size) {
+            $var_img = $srcset_options["image"]->size($size, 0);
+            if ($webp) {
+                $srcset .= $var_img->webp->url . " {$size}w,";
+            } else {
+                $srcset .= $var_img->url . " {$size}w,";
+            }
+        }
+        return substr($srcset, 0, -1); // Remove trailing comma
     }
 }
