@@ -118,13 +118,13 @@ class LazyResponsiveImages extends WireData implements Module {
         $art_directed = is_array($options["image"]);
         $has_source = $webp || $art_directed;
         $lazy_load = $options["lazy_load"] ?? false;
+        $data_prfx = "";
 
         if ($lazy_load) {
-            $options["data_prfx"] = "data-";
+            $data_prfx = "data-";
             $options["img_class"] .= " lazy noscript-hidden";
-        } else {
-            $options["data_prfx"] = "";
         }
+        $options["data_prfx"] = $data_prfx;
 
         if ($has_source) {
             // art directed or webp
@@ -135,13 +135,12 @@ class LazyResponsiveImages extends WireData implements Module {
                 foreach ($options["image"] as $field_name => $variant) {
                     
                     $variations = $this["image_spec"][$field_name];
-                    bd($variant["image"]);
                     
                     $source_options = [
                         "image" => $variant["image"],
                         "media" => $variant["media"],
                         "sizes" => $variant["sizes"],
-                        "data_prfx" => $options["data_prfx"],
+                        "data_prfx" => $data_prfx,
                         "variations" => $variations
                     ];
                     
@@ -156,7 +155,7 @@ class LazyResponsiveImages extends WireData implements Module {
                     "image" => $image,
                     "media" => false,
                     "sizes" => $options["sizes"],
-                    "data_prfx" => $options["data_prfx"],
+                    "data_prfx" => $data_prfx,
                     "variations" => $variations
                 ];
                 
@@ -167,10 +166,17 @@ class LazyResponsiveImages extends WireData implements Module {
             $url_options["variations"] = $variations;
             $src_url = $this->getSrcUrl($url_options, $art_directed);
 
-            return "<picture>
+            $picture_elmt = "<picture>
                 $source_markup
-                <img alt='$alt_str' class='{$options["img_class"]}' src='$src_url'>
+                <img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url'>
             </picture>"; 
+
+            $noscript_picture_elmt = str_replace([$data_prfx, "noscript-hidden"], "", $picture_elmt);
+
+            return "$picture_elmt
+                <noscript>
+                    $noscript_picture_elmt
+                </noscript>";
         }
 
         // Not art directed or webp - get standalone image markup
@@ -179,9 +185,13 @@ class LazyResponsiveImages extends WireData implements Module {
         $sizes = $options["sizes"];
         $url_options["variations"] = $variations;
         $src_url = $this->getSrcUrl($url_options, $art_directed);
-        return "<img alt='$alt_str' class='{$options["img_class"]}' srcset='$srcset' sizes='$sizes' src='$src_url'>";
+        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url'>";
+        $noscript_img_elmt = str_replace([$data_prfx, " class='noscript-hidden'"], "", $img_elmt);
 
-        // Still need noscript
+        return "$img_elmt
+                <noscript>
+                    $noscript_img_elmt
+                </noscript>";
     }
 
     private function getSrcUrl($url_options, $art_directed = false) {
@@ -197,6 +207,7 @@ class LazyResponsiveImages extends WireData implements Module {
     }
 
     private function getSourceElmts($source_options, $webp, $art_directed = false) {
+        $data_prfx = $source_options["data_prfx"];
         $media_str = !$art_directed ? "" : "media='{$source_options["media"]}'";
         $sizes = $source_options["sizes"];
         $source_elmts = "";
@@ -204,12 +215,12 @@ class LazyResponsiveImages extends WireData implements Module {
         // Source for webp
         if ($webp) {
             $webp_srcset = $this->getSrcset($source_options, $webp);
-            $source_elmts .= "<source type='image/webp' $media_str srcset='$webp_srcset' sizes='$sizes'>";
+            $source_elmts .= "<source type='image/webp' $media_str {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'>";
         }
 
         // Source for regular image type
         $srcset = $this->getSrcset($source_options, $webp);
-        $source_elmts .= "<source $media_str srcset='$srcset' sizes='$sizes'>";
+        $source_elmts .= "<source $media_str {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes'>";
 
         return $source_elmts;    
     }
