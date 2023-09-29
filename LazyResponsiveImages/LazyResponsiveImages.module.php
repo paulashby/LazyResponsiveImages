@@ -107,6 +107,7 @@ class LazyResponsiveImages extends WireData implements Module {
 
     public function renderImage($options) {
         $image = $options["image"];
+        $aspect_ratio = $image->ratio();
         $url_options = [
             "image" => $image,
             "context" => $options["context"] ?? ""
@@ -168,7 +169,7 @@ class LazyResponsiveImages extends WireData implements Module {
 
             $picture_elmt = "<picture>
                 $source_markup
-                <img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url'>
+                <img alt='$alt_str' class='{$options["img_class"]}' style='aspect-ratio: {$aspect_ratio};' {$data_prfx}src='$src_url'>
             </picture>"; 
 
             $noscript_picture_elmt = str_replace([$data_prfx, "noscript-hidden"], "", $picture_elmt);
@@ -185,7 +186,7 @@ class LazyResponsiveImages extends WireData implements Module {
         $sizes = $options["sizes"];
         $url_options["variations"] = $variations;
         $src_url = $this->getSrcUrl($url_options, $art_directed);
-        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url'>";
+        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' style='aspect-ratio: {$aspect_ratio};' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url'>";
         $noscript_img_elmt = str_replace([$data_prfx, " class='noscript-hidden'"], "", $img_elmt);
 
         return "$img_elmt
