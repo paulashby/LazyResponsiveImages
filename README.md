@@ -9,6 +9,10 @@
   ## Description
 
   Processwire module. Creates image variations and renders markup for HTML5 image srcsets.
+
+  ## Requirements
+
+ LazyResponsiveImages makes use of [Andrea Verlicchi](https://github.com/verlok)'s vanilla-lazyload script. Download [lazyload.esm.min.js](https://github.com/verlok/vanilla-lazyload) and copy to the /templates/js/vendor directory.
   
   ## Installation
   
