@@ -35,8 +35,6 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
     - a reference to a Processwire image field:<br />
     ```$page->product_shot->first();```
     - or, if providing several art directed images for different breakpoints, an array whose keys are the names of fields configured in [the module settings](#configuration) and whose values are options arrays:
-<br />
-<br />
 
 ```php
 [
