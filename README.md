@@ -38,20 +38,20 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
 <br />
 <br />
 
-        ```php
-        [
-            "hero_image" => [
-                "image" => $page->hero_image->first(),
-                "media" => "(min-width: 650px)",
-                "sizes" => "(min-width: 1200px) 1130px, (min-width: 660px) 100vw"
-            ],
-            "hero_image_narrow" => [
-                "image" => $page->hero_image_narrow->first(),
-                "media" => "(max-width: 649px)",
-                "sizes" => "100vw"
-            ]
-        ]
-        ```
+```php
+[
+    "hero_image" => [
+        "image" => $page->hero_image->first(),
+        "media" => "(min-width: 650px)",
+        "sizes" => "(min-width: 1200px) 1130px, (min-width: 660px) 100vw"
+    ],
+    "hero_image_narrow" => [
+        "image" => $page->hero_image_narrow->first(),
+        "media" => "(max-width: 649px)",
+        "sizes" => "100vw"
+    ]
+]
+```
 
  - **sizes** - string to be used directly in the "sizes" attribute of the img tag:<br />
  ```(max-width: 600px) 480px, 800px```
