@@ -37,7 +37,8 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
     - or, if providing several art directed images for different breakpoints, an array whose keys are the names of fields configured in [the module settings](#configuration) and whose values are options arrays:
 <br />
 <br />
-        ```
+
+        ```php
         [
             "hero_image" => [
                 "image" => $page->hero_image->first(),
@@ -51,13 +52,13 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
             ]
         ]
         ```
-    <br />
+
  - **sizes** - string to be used directly in the "sizes" attribute of the img tag:<br />
- "(max-width: 600px) 480px, 800px"
+ ```(max-width: 600px) 480px, 800px```
  - **product_data_attributes** - string of data attributes to add to the img tag:<br />
- "data-day='1' data-month='jan'"
+ ```data-day='1' data-month='jan'```
  - **extra_attributes** - string of additional attributes to add to the image tag - note that these should be valid HTML5 attributes:<br />
- "crossorigin='use-credentials' decoding='async'"
+ ```crossorigin='use-credentials' decoding='async'```
  - **lazy_load** - boolean<br />Note: you can use <br />
  ```$lazyImages->getMaxEager($context);```<br />if you've set it up for the current context. This will allow you to determine when to switch to lazy loading (see [Configuration](#configuration))
  - **webp** - boolean<br />
