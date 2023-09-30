@@ -182,7 +182,8 @@ class LazyResponsiveImages extends WireData implements Module {
 
         // Not art directed or webp - get standalone image markup
         $variations = $this["image_spec"][$options["field_name"]];
-        $srcset = $this->getSrcset($options["image"], $variations, $webp);
+        $options["variations"] = $variations;
+        $srcset = $this->getSrcset($options);
         $sizes = $options["sizes"];
         $url_options["variations"] = $variations;
         $src_url = $this->getSrcUrl($url_options, $art_directed);
@@ -215,18 +216,18 @@ class LazyResponsiveImages extends WireData implements Module {
 
         // Source for webp
         if ($webp) {
-            $webp_srcset = $this->getSrcset($source_options, $webp);
+            $webp_srcset = $this->getSrcset($source_options, true);
             $source_elmts .= "<source type='image/webp' $media_str {$data_prfx}srcset='$webp_srcset' {$data_prfx}sizes='$sizes'>";
         }
 
         // Source for regular image type
-        $srcset = $this->getSrcset($source_options, $webp);
+        $srcset = $this->getSrcset($source_options);
         $source_elmts .= "<source $media_str {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes'>";
 
         return $source_elmts;    
     }
 
-    public function getSrcset($srcset_options, $webp) {
+    public function getSrcset($srcset_options, $webp = false) {
         $srcset = "";
 
         foreach ($srcset_options["variations"] as $size) {
