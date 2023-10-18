@@ -16,7 +16,10 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
   
   ## Installation
   
- Download and install the latest version of [Processwire](https://processwire.com) and be sure to add the vanilla-lazyload script to your templates using one of the methods described [here](https://github.com/verlok/vanilla-lazyload#-getting-started---script).<br /><br />Log into your site as an admin and go the Modules page. Select the Site tab and click the Install button on the LazyResponsiveImages module entry.
+ Download and install the latest version of [Processwire](https://processwire.com) and be sure to add the vanilla-lazyload script to your templates using one of the methods described [here](https://github.com/verlok/vanilla-lazyload#-getting-started---script).<br /><br />
+   Enable webp in /site/config.php<br />
+  ```$config->contentTypes('webp', 'image/webp');```<br />
+  ```$config->imageSizerOptions('webpAdd', true);```<br /><br />Log into your site as an admin and go the Modules page. Select the Site tab and click the Install button on the LazyResponsiveImages module entry.
 
   ## Configuration
 
@@ -27,6 +30,7 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
   These sizes will be used for legacy browsers that don't support srcset
   
   ## Usage
+  
   Load the module in your php file<br />```$lazyImages = $modules->get("LazyResponsiveImages");```<br /><br />Retrieve the max_eager value for the current context if you have provided this in [the module settings](#configuration). Use this to set an appropriate boolean value for the the lazy_load option.<br /><br />Configure the options array for your image:<br />
  - **field_name** - name of the image field the image is stored in
  - **alt_str** -  image alt attribute
