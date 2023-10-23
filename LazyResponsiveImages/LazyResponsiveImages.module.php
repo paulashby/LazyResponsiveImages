@@ -191,9 +191,9 @@ class LazyResponsiveImages extends WireData implements Module {
     private function getSrcUrl($url_options, $art_directed = false) {
         
         $image = $art_directed ? end($url_options["image"])["image"] : $url_options["image"];
-        $context = $url_options["context"];
-
+        $context = $url_options["context"] = $url_options["context"] ?? "";
         $fallbacks = $this["image_fallback_spec"] ?? false;
+
         if ($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])) {
             return $image->size($fallbacks[$context], 0)->url;
         }
