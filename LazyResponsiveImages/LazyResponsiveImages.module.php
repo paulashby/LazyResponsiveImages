@@ -131,6 +131,8 @@ class LazyResponsiveImages extends WireData implements Module {
                 foreach ($options["image"] as $field_name => $variant) {
                     
                     $variations = $this["image_spec"][$field_name];
+                    // Need variations in $options so we can set the src url for the image element
+                    $options["variations"] = $variations;
                     
                     $source_options = [
                         "image" => $variant["image"],
@@ -155,7 +157,7 @@ class LazyResponsiveImages extends WireData implements Module {
                     "variations" => $variations
                 ];
                 
-                $source_markup = $this->getSourceElmts($options, $webp, $art_directed);
+                $source_markup = $this->getSourceElmts($source_options, $webp, $art_directed);
             }
             
             $src_url = $this->getSrcUrl($options, $art_directed);
