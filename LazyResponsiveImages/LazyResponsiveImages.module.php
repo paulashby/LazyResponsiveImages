@@ -115,6 +115,7 @@ class LazyResponsiveImages extends WireData implements Module {
         $has_source = $webp || $art_directed;
         $lazy_load = $options["lazy_load"] ?? false;
         $data_prfx = "";
+        $aspect_ratio = array_key_exists("css_aspect_ratio", $options) ? "style='aspect-ratio:$image->ratio'" : "";
 
         if ($lazy_load) {
             $data_prfx = "data-";
@@ -129,11 +130,11 @@ class LazyResponsiveImages extends WireData implements Module {
             if ($art_directed) {
                 // Iterate art directed images and get source elements
                 foreach ($options["image"] as $field_name => $variant) {
-                    
+
                     $variations = $this["image_spec"][$field_name];
                     // Need variations in $options so we can set the src url for the image element
                     $options["variations"] = $variations;
-                    
+
                     $source_options = [
                         "image" => $variant["image"],
                         "media" => $variant["media"],
@@ -141,7 +142,7 @@ class LazyResponsiveImages extends WireData implements Module {
                         "data_prfx" => $data_prfx,
                         "variations" => $variations
                     ];
-                    
+
                     $source_markup .= $this->getSourceElmts($source_options, $webp, $art_directed);
                 }
             } else {
@@ -156,16 +157,16 @@ class LazyResponsiveImages extends WireData implements Module {
                     "data_prfx" => $data_prfx,
                     "variations" => $variations
                 ];
-                
+
                 $source_markup = $this->getSourceElmts($source_options, $webp, $art_directed);
             }
-            
+
             $src_url = $this->getSrcUrl($options, $art_directed);
 
             $picture_elmt = "<picture>
                 $source_markup
-                <img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url'>
-            </picture>"; 
+                <img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url' $aspect_ratio>
+            </picture>";
 
             $noscript_picture_elmt = str_replace([$data_prfx, "noscript-hidden"], "", $picture_elmt);
 
@@ -181,7 +182,7 @@ class LazyResponsiveImages extends WireData implements Module {
         $srcset = $this->getSrcset($options, $webp);
         $sizes = $options["sizes"];
         $src_url = $this->getSrcUrl($options, $art_directed);
-        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url'>";
+        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url' $aspect_ratio>";
         $noscript_img_elmt = str_replace([$data_prfx, " class='noscript-hidden'"], "", $img_elmt);
 
         return "$img_elmt
@@ -191,7 +192,7 @@ class LazyResponsiveImages extends WireData implements Module {
     }
 
     private function getSrcUrl($url_options, $art_directed = false) {
-        
+
         $image = $art_directed ? end($url_options["image"])["image"] : $url_options["image"];
         $context = $url_options["context"] = $url_options["context"] ?? "";
         $fallbacks = $this["image_fallback_spec"] ?? false;
@@ -217,7 +218,7 @@ class LazyResponsiveImages extends WireData implements Module {
         $srcset = $this->getSrcset($source_options, false);
         $source_elmts .= "<source $media_str {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes'>";
 
-        return $source_elmts;    
+        return $source_elmts;
     }
 
     public function getSrcset($srcset_options, $webp) {
