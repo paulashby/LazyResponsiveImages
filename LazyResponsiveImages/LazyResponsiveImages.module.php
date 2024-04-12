@@ -19,7 +19,6 @@ class LazyResponsiveImages extends WireData implements Module {
         $this->addHookBefore("Modules::saveConfig", $this, "customSaveConfig");
     }
     public function init() {
-
         $this->addHookAfter('InputfieldFile::fileAdded', $this, 'sizeImage');
     }
     /**
@@ -40,6 +39,10 @@ class LazyResponsiveImages extends WireData implements Module {
 
         // Get details of fields with responsive image sizes
         $sanitized_image_fields = $this->sanitizer->text($data["image_fields"]);
+        $sanitized_image_fields_extra = $this->sanitizer->text($data["image_fields_extra"]);
+        if (strlen($sanitized_image_fields_extra)) {
+            $sanitized_image_fields .= "&$sanitized_image_fields_extra";
+        }
 
         //Convert to associative array of field_name properties with comma-space delimited size string values
         parse_str($sanitized_image_fields, $image_field_spec);
@@ -78,6 +81,15 @@ class LazyResponsiveImages extends WireData implements Module {
         $inputfield = $event->object;
         $image_spec = $this->image_spec;
         $variations = false;
+        $image = $event->argumentsByName("pagefile");
+        $is_gif = $image->ext === "gif";
+        $exclude_gifs = $this->exclude_gifs === 1;
+
+        if($is_gif && $exclude_gifs) {
+            // As ProcessWire is not generating animated variations, the module config provides the exclude_gifs option.
+            // This means alternative strategies can be used for gifs such as providing pre-sized animated variations in an image array
+            return;
+        }
 
         // Check whether this inputField requires responsive image variations
         foreach ($image_spec as $field_name => $sizes) {
@@ -88,12 +100,11 @@ class LazyResponsiveImages extends WireData implements Module {
         }
 
         // All done if no variations required
-        if ($variations == false)
+        if ($variations == false) {
             return;
+        }
 
         // Make variations
-        $image = $event->argumentsByName("pagefile");
-
         foreach ($variations as $width) {
 
             $image->size($width, 0);
