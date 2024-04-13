@@ -4,7 +4,8 @@
 
   ## Table of Contents
 
-  [Description](#description)<br />[Requirements](#requirements)<br />[Installation](#installation)<br />[Configuration](#configuration)<br />[Usage](#usage)<br />[Contributing](#contributing)<br />[Tests](#tests)<br />[License](#license)<br />[Questions](#questions)<br />
+  [Description](#description)<br />[Requirements](#requirements)<br />[Installation](#installation)<br />[Configuration](#configuration)<br />[Usage](#usage)<br />
+  [Animated gifs](#animated-gifs)<br />[Contributing](#contributing)<br />[Tests](#tests)<br />[License](#license)<br />[Questions](#questions)<br />
 
   ## Description
 
