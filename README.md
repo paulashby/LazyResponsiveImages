@@ -39,6 +39,9 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
  - **image** - either
     - a reference to a Processwire image field:<br />
     ```$page->product_shot->first();```
+    - a reference to a Processwire Pageimage array containing animated gifs:<br />
+    ```$page->animated_chart;```<br />
+    See the [Animated gifs](#animated-gifs) section for more info on why you might want to do this.
     - or, if providing several art directed images for different breakpoints, an array whose keys are the names of fields configured in [the module settings](#configuration) and whose values are options arrays:
 
 ```php
@@ -62,13 +65,22 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
  ```data-day='1' data-month='jan'```
  - **extra_attributes** - string of additional attributes to add to the image tag - note that these should be valid HTML5 attributes:<br />
  ```crossorigin='use-credentials' decoding='async'```
- - **lazy_load** - boolean<br />Note: you can use <br />
- ```$lazyImages->getMaxEager($context);```<br />if you've set it up for the current context. This will allow you to determine when to switch to lazy loading (see [Configuration](#configuration))
+ - **css_aspect_ratio** - boolean. Adds an inline style to the image element setting its aspect-ratio property<br />
+ - **lazy_load** - boolean<br />Note: if you've configured it for the current context, you can use <br />
+ ```$lazyImages->getMaxEager($context);```<br />
+ This sets the number of images to output before switching to lazy loading (see [Configuration](#configuration))
  - **webp** - boolean<br />
 
  Then render your image with<br />
   ```$lazyImages->renderImage($options);```
-    
+  
+  ## Animated gifs
+  
+  ProcessWire is currently not retaining animation frames when resizing gifs. As a work-around, you can use the checkbox on the module configuration page to exclude gifs from variations, meaning that no size variations will be generated when gif files are uploaded.<br /><br />
+  In the image entry of your options array, you can then provide a Pageimage array containing pre-sized gifs whose urls will be output as the srcset of your image or picture element.<br /><br />
+  Note that the module will throw an error if:
+  - the Pageimage array contains anything other than gifs.
+  - the options array has ```webp``` set to ```true```.<br /><br />
   ## Contributing
   
   If you would like to make a contribution to the app, simply fork the repository and submit a Pull Request. If I like it, I may include it in the codebase.
