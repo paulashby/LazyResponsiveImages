@@ -23,6 +23,7 @@ $config = array(
 		'type' => 'checkbox',
 		'label' => 'Exclude gifs from variations',
 		'description' => 'Useful if employing alternative strategy for animated gifs since Processwire is currently generating only single frame variations',
+        'notes' => 'For more info see https://github.com/paulashby/LazyResponsiveImages',
 		'autocheck' => 0,
 		'checkedValue' => 1,
 		'uncheckedValue' => 0,

@@ -77,9 +77,10 @@ In order to use LazyResponsiveImages, your site will need to be running on [Proc
   
   ## Animated gifs
   
-  ProcessWire is currently not retaining animation frames when resizing gifs. As a work-around, you can use the checkbox on the module configuration page to exclude gifs from variations, meaning that no size variations will be generated when gif files are uploaded.<br /><br />
+  ProcessWire is currently not retaining animation frames when resizing gifs. As a work-around, you can use the  ```Exclude gifs from variations``` checkbox on the module configuration page to exclude gifs from variations, meaning that no size variations will be generated when gif files are uploaded.<br /><br />
   In the image entry of your options array, you can then provide a Pageimage array containing pre-sized gifs whose urls will be output as the srcset of your image or picture element.<br /><br />
-  Note that the module will throw an error if:
+  If you also need to include static gifs on your site, you can temporarily disable the ```Exclude gifs from variations``` checkbox on the module configuration while you upload the images. You can then treat these like any other images. **Do make sure you reactive the ```Exclude gifs from variations``` checkbox when the upload is complete, or attempting to output animated gifs as described above will result in an error being thrown.**<br /><br />
+  Note that the module will also throw an error if:
   - the Pageimage array contains anything other than gifs.
   - the options array has ```webp``` set to ```true```.<br /><br />
   ## Contributing
