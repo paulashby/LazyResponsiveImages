@@ -162,8 +162,14 @@ class LazyResponsiveImages extends WireData implements Module {
         $variations = [];
         $has_source = $webp || $art_directed;
         $lazy_load = $options["lazy_load"] ?? false;
+        $image_wrapper = $options["image_wrapper"] ?? false;
         $data_prfx = "";
-        $aspect_ratio = array_key_exists("css_aspect_ratio", $options) ? "style='aspect-ratio:$image->ratio'" : "";
+        $use_aspect_ratio = array_key_exists("css_aspect_ratio", $options);
+
+        // Style element is needed when art directed images need aspect ratio attributes -
+        // this requires media queries so we can't simply use inline styles
+        $style_elmt = "";
+        $elmt_id = "";
 
         if ($lazy_load) {
             $data_prfx = "data-";
@@ -177,8 +183,22 @@ class LazyResponsiveImages extends WireData implements Module {
 
             if ($art_directed) {
                 // Iterate art directed images and get source elements
+
+                // Create style element to provide media queries if required
+                // - needed when art directed image have aspect ratio attributes
+                $style_elmt = $use_aspect_ratio ? "<style>" : "";
+
                 foreach ($options["image"] as $field_name => $variant) {
 
+                    if ($use_aspect_ratio) {
+                        // Add media query for aspect ratio of this art directed image
+                        $elmt_id = $this->getUniqueImageId($variant["image"]);
+                        $style_elmt .= "@media screen and {$variant['media']} {
+                            #$elmt_id {
+                                aspect-ratio: {$variant['image']->ratio};
+                            }
+                        }";
+                    }
                     $variations = $this["image_spec"][$field_name];
                     // Need variations in $options so we can set the src url for the image element
                     $options["variations"] = $variations;
@@ -193,7 +213,9 @@ class LazyResponsiveImages extends WireData implements Module {
                     ];
                     $source_markup .= $this->getSourceElmts($source_options, $webp, $art_directed);
                 }
+                $style_elmt .= $use_aspect_ratio ? "</style>" : "";
             } else {
+
                 // get source for the single image with webp version
                 $variations = $this["image_spec"][$options["field_name"]];
                 $options["variations"] = $variations;
@@ -207,16 +229,28 @@ class LazyResponsiveImages extends WireData implements Module {
                 ];
                 $source_markup = $this->getSourceElmts($source_options, $webp, $art_directed);
             }
+            $image_attributes = $this->getImageAttributes($options, $art_directed);
+            $src_url = $image_attributes["srcUrl"];
 
-            $src_url = $this->getSrcUrl($options, $art_directed);
+            // Art directed images have aspect ratio applied by media queries in a style block, so use empty string for inline styles
+            $aspect_ratio = $use_aspect_ratio && !$art_directed ? "style='aspect-ratio:{$image_attributes["aspect_ratio"]}'" : "";
 
-            $picture_elmt = "<picture>
+            $image_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url' $aspect_ratio>";
+
+            // Assemble style block and picture element
+            $styled_picture = " $style_elmt
+            <picture>
                 $source_markup
-                <img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}src='$src_url' $aspect_ratio>
+                $image_elmt
             </picture>";
 
+            // Wrap if required
+            $picture_elmt  = $image_wrapper ? "<div id='$elmt_id' class='image-wrapper' $aspect_ratio>$styled_picture</div>" : $styled_picture;
+
+            // Prepare noscript version
             $noscript_picture_elmt = str_replace([$data_prfx, "noscript-hidden"], "", $picture_elmt);
 
+            // Return with noscript version
             return "$picture_elmt
                 <noscript>
                     $noscript_picture_elmt
@@ -229,14 +263,30 @@ class LazyResponsiveImages extends WireData implements Module {
         $options["variations"] = $variations;
         $srcset = $this->getSrcset($options, $webp);
         $sizes = $options["sizes"];
-        $src_url = $this->getSrcUrl($options, $art_directed);
-        $img_elmt = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url' $aspect_ratio>";
-        $noscript_img_elmt = str_replace([$data_prfx, " class='noscript-hidden'"], "", $img_elmt);
+        $image_attributes = $this->getImageAttributes($options, $art_directed);
+        $src_url = $image_attributes["srcUrl"];
+        $aspect_ratio = $use_aspect_ratio ? "style='aspect-ratio:{$image_attributes["aspect_ratio"]}'" : "";
 
-        return "$img_elmt
-                <noscript>
-                    $noscript_img_elmt
-                </noscript>";
+        // Assemble standalone image element
+        $image_markup = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url' $aspect_ratio>";
+
+        // Wrap if required
+        $image_elmt = $image_wrapper ? "<div class='image-wrapper' $aspect_ratio>$image_markup</div>" : $image_markup;
+
+        // Prepare noscript version
+        $noscript_img_elmt = str_replace([$data_prfx, " class='noscript-hidden'"], "", $image_elmt);
+
+        // Return with noscript version
+        return "$image_elmt
+            <noscript>
+                $noscript_img_elmt
+            </noscript>";
+    }
+
+    private function getUniqueImageId($image) {
+        $base = $image->basename;
+        $id_prefix = substr($base, 0, strpos($base, "."));
+        return uniqid($id_prefix);
     }
 
     private function isAnimatedGif($image, $webp) {
@@ -265,19 +315,23 @@ class LazyResponsiveImages extends WireData implements Module {
         }
     }
 
-    private function getSrcUrl($url_options, $art_directed = false) {
+    private function getImageAttributes($url_options, $art_directed = false) {
         $image = $art_directed ? end($url_options["image"])["image"] : $url_options["image"];
         $context = $url_options["context"] = $url_options["context"] ?? "";
         $fallbacks = $this["image_fallback_spec"] ?? false;
 
-        if (array_key_exists("is_animated_gif", $url_options) && $url_options["is_animated_gif"]) {
-            return $image->first()->url;
-        }
+        $image_attributes = [
+            "aspect_ratio" => $image->ratio()
+        ];
 
-        if ($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])) {
-            return $image->size($fallbacks[$context], 0)->url;
+        if (array_key_exists("is_animated_gif", $url_options) && $url_options["is_animated_gif"]) {
+            $image_attributes["srcUrl"] = $image->first()->url;
+        } elseif ($fallbacks && array_key_exists($context, $fallbacks) && strlen($fallbacks[$context])) {
+            $image_attributes["srcUrl"] = $image->size($fallbacks[$context], 0)->url;
+        } else {
+            $image_attributes["srcUrl"] = $image->size(end($url_options["variations"]), 0)->url;
         }
-        return $image->size(end($url_options["variations"]), 0)->url;
+        return $image_attributes;
     }
 
     private function getSourceElmts($source_options, $webp, $art_directed = false) {
