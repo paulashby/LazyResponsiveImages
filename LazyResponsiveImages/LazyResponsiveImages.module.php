@@ -265,7 +265,8 @@ class LazyResponsiveImages extends WireData implements Module {
         $sizes = $options["sizes"];
         $image_attributes = $this->getImageAttributes($options, $art_directed);
         $src_url = $image_attributes["srcUrl"];
-        $aspect_ratio = $use_aspect_ratio ? "style='aspect-ratio:{$image_attributes["aspect_ratio"]}'" : "";
+
+        $aspect_ratio = $use_aspect_ratio ? $this->getStandAloneImageRatioStyle($image, $options["is_animated_gif"]) : "";
 
         // Assemble standalone image element
         $image_markup = "<img alt='$alt_str' class='{$options["img_class"]}' {$data_prfx}srcset='$srcset' {$data_prfx}sizes='$sizes' {$data_prfx}src='$src_url' $aspect_ratio>";
@@ -332,6 +333,12 @@ class LazyResponsiveImages extends WireData implements Module {
             $image_attributes["srcUrl"] = $image->size(end($url_options["variations"]), 0)->url;
         }
         return $image_attributes;
+    }
+
+    private function getStandAloneImageRatioStyle($page_image, $isArray) {
+        $image = $isArray ? $page_image->first() : $page_image;
+        $aspect_ratio = $image->ratio;
+        return "style='aspect-ratio:$aspect_ratio'";
     }
 
     private function getSourceElmts($source_options, $webp, $art_directed = false) {
